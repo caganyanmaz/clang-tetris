@@ -21,6 +21,7 @@
 char board[HEIGHT][WIDTH];
 
 
+
 char blocks[BLOCK_COUNT][BLOCK_SIZE][BLOCK_SIZE] = {
 	{{'.', '.', '.', '.'},
 		{'.', '.', '.', '.'},
@@ -105,13 +106,12 @@ void draw_board()
 	{
 		for (int j = 0; j < WIDTH; j++)
 		{
+			SDL_Rect rect = {.x = j * CELL_SIZE + 1, .y = i * CELL_SIZE + 1, .w = CELL_SIZE - 2, .h = CELL_SIZE - 2};
 			if (board[i][j] == '.')
 			{
-				SDL_Rect rect = { .x = j * CELL_SIZE + 1, .y = i * CELL_SIZE + 1, .w = CELL_SIZE - 2, .h = CELL_SIZE - 2};
 				SDL_FillRect(surface, &rect, black);
 				continue;
 			}
-			SDL_Rect rect = {.x = j * CELL_SIZE, .y = i * CELL_SIZE, .w = CELL_SIZE, .h = CELL_SIZE };
 			SDL_FillRect(surface, &rect, block_colors[(int)board[i][j]]);
 		}
 	}
@@ -308,9 +308,8 @@ void rotate_right()
 	
 }
 
-void rotate(int direction)
+bool try_rotate(int direction)
 {
-	fill_block(false);
 	if (direction == LEFT)
 	{
 		rotate_left();
@@ -319,13 +318,30 @@ void rotate(int direction)
 	{
 		rotate_right();
 	}
-	if (is_hitting() && direction == LEFT)
+	bool valid = !is_hitting();
+	if (!valid && direction == LEFT)
 	{
 		rotate_right();
 	}
-	else if (is_hitting())
+	else if (!valid)
 	{
 		rotate_left();
+	}
+	return valid;
+}
+
+void rotate(int direction)
+{
+	fill_block(false);
+	int dx[] = {0, -1, +1};
+	for (int i = 0; i < sizeof(dx) / sizeof(dx[0]); i++)
+	{
+		block_pos_x += dx[i];
+		if(try_rotate(direction))
+		{
+			break;
+		}
+		block_pos_x -= dx[i];
 	}
 	fill_block(true);
 }
